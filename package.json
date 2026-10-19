@@ -1,0 +1,55 @@
+{
+  "name": "base-template",
+  "version": "0.0.0",
+  "private": true,
+  "main": "index.ts",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@expo-google-fonts/inter": "^0.4.2",
+    "@expo-google-fonts/kranky": "^0.4.1",
+    "@expo-google-fonts/nunito": "^0.4.2",
+    "@expo-google-fonts/playfair-display": "^0.4.2",
+    "@expo-google-fonts/space-mono": "^0.4.2",
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "@tanstack/react-query": "^5.0.0",
+    "@some-alambre/ui": "1.0.0",
+    "alambre": "1.2.0",
+    "expo": "57.0.30",
+    "expo-font": "^57.0.4",
+    "react": "19.2.3",
+    "react-native": "0.86.3",
+    "react-native-gesture-handler": "~2.32.0",
+    "react-native-reanimated": "4.5.1",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-svg": "15.15.4",
+    "react-native-worklets": "0.10.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "9.39.1",
+    "@types/react": "~19.2.4",
+    "@typescript-eslint/eslint-plugin": "^8.46.3",
+    "@typescript-eslint/parser": "^8.46.3",
+    "eslint": "9.39.1",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-native": "^5.0.0",
+    "typescript": "~5.9.2",
+    "vitest": "^4.1.11"
+  },
+  "overrides": {
+    "@react-native/metro-config": "~0.86.3"
+  },
+  "resolutions": {
+    "@react-native/metro-config": "~0.86.3"
+  },
+  "description": "Generic React Native app skeleton on top of alambre (Expo SDK 57).",
+  "packageManager": "pnpm@12.4.1"
+}
