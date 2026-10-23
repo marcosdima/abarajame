@@ -1,9 +1,17 @@
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { AlambreIcons, useConfirm, useNavigator, useToast } from 'alambre';
 import { useLang } from '../../providers/lang';
-import { useConfig } from '../../providers/config';
+import { useConfig, type BotSpeed } from '../../providers/config';
+import { useSensoryCues } from '../../providers/sensory';
 import { useLightDark, light as lightTokens, dark as darkTokens } from '../../providers/theme';
-import { AppCard, AppButton, ToggleLightDark } from '@some-alambre/ui';
+import {
+  AppCard,
+  AppButton,
+  AppSegmentedControl,
+  AppSwitch,
+  AppTextInput,
+  ToggleLightDark,
+} from '@some-alambre/ui';
 
 const GITHUB_URL = 'https://github.com/marcosdima';
 const CAFECITO_URL = 'https://cafecito.app/marcosdima';
@@ -23,6 +31,7 @@ export default () => {
   const { theme, toggleTheme, currThemeName } = useLightDark();
   const { lang, currentLang, changeLang } = useLang();
   const { config, saveField } = useConfig();
+  const { hapticsEnabled, setHapticsEnabled } = useSensoryCues();
   const { navigate } = useNavigator();
   const { show } = useToast();
   const { confirm } = useConfirm();
@@ -57,6 +66,8 @@ export default () => {
     if (confirmed) {
       await changeLang('es');
       await saveField('fontFamily', 'Inter');
+      await saveField('botSpeed', 'slow');
+      await setHapticsEnabled(true);
       if (currThemeName !== 'light') {
         toggleTheme();
       }
@@ -71,288 +82,330 @@ export default () => {
   };
 
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: theme.background }]}
-      contentContainerStyle={styles.content}
-      showsVerticalScrollIndicator={false}
-    >
-      {/* Idioma / Language */}
-      <AppCard
-        variant="outlined"
-        title={lang.settings.language}
-        style={styles.card}
-      >
-        <View
-          style={[
-            styles.segmentedContainer,
-            { backgroundColor: theme.surfaceAlt, borderColor: theme.border },
-          ]}
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      <View style={styles.content}>
+        {/* Perfil de Jugador / Player Profile */}
+        <AppCard
+          variant="outlined"
+          title={lang.settings.profileTitle}
+          subtitle={lang.settings.profileSubtitle}
+          style={styles.card}
         >
-          {(['es', 'en'] as const).map((code) => {
-            const active = currentLang === code;
-            const label = code === 'es' ? 'Español' : 'English';
-            return (
-              <Pressable
-                key={code}
-                accessibilityRole="button"
-                accessibilityState={{ selected: active }}
-                onPress={() => void changeLang(code)}
-                style={[
-                  styles.segmentedButton,
-                  active && [
-                    styles.segmentedButtonActive,
-                    {
-                      backgroundColor: theme.surface,
-                      borderColor: theme.primary,
-                    },
-                  ],
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.segmentedText,
-                    {
-                      color: active ? theme.primary : theme.muted,
-                      fontWeight: active ? '700' : '600',
-                    },
-                  ]}
-                >
-                  {label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      </AppCard>
-
-      {/* Tema / Theme */}
-      <AppCard
-        variant="outlined"
-        title={lang.settings.theme}
-        subtitle={
-          currThemeName === 'light'
-            ? lang.settings.themeSubtitleLight
-            : lang.settings.themeSubtitleDark
-        }
-        style={styles.card}
-      >
-        <View style={styles.toggleRow}>
-          <ToggleLightDark
-            toggle={toggleTheme}
-            setLeft={currThemeName === 'light'}
-            style={styles.toggle}
-            colors={{
-              light: {
-                background: lightTokens.surfaceAlt,
-                border: lightTokens.border,
-                circle: lightTokens.primary,
-                sun: '#f59e0b',
-                moon: lightTokens.muted,
-              },
-              dark: {
-                background: darkTokens.surfaceAlt,
-                border: darkTokens.border,
-                circle: '#9eebce',
-                sun: '#ffc266',
-                moon: darkTokens.muted,
-              },
-            }}
+          <AppTextInput
+            label={lang.settings.profileNameLabel}
+            placeholder={lang.settings.profileNamePlaceholder}
+            value={config.playerName}
+            onChangeText={(name) => void saveField('playerName', name)}
+            helperText={lang.settings.profileNameHelper}
+            clearable
+            maxLength={20}
+            returnKeyType="done"
           />
-        </View>
-      </AppCard>
+        </AppCard>
 
-      {/* Tipografía / Typography */}
-      <AppCard
-        variant="outlined"
-        title={lang.settings.typography}
-        subtitle={lang.settings.typographySubtitle}
-        style={styles.card}
-      >
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.fontsScroll}
+        {/* Idioma / Language */}
+        <AppCard
+          variant="outlined"
+          title={lang.settings.language}
+          style={styles.card}
         >
-          {FONTS.map((font) => {
-            const active = config.fontFamily === font;
-            const displayLabel =
-              font === 'PlayfairDisplay' ? 'Playfair' : font === 'SpaceMono' ? 'Space Mono' : font;
-            return (
-              <Pressable
-                key={font}
-                accessibilityRole="button"
-                accessibilityState={{ selected: active }}
-                onPress={() => void saveField('fontFamily', font)}
-                style={[
-                  styles.fontChip,
-                  {
-                    backgroundColor: active ? theme.primarySoft : theme.surfaceAlt,
-                    borderColor: active ? theme.primary : theme.border,
-                  },
-                ]}
-              >
-                <Text
+          <AppSegmentedControl
+            options={[
+              { label: 'Español', value: 'es' },
+              { label: 'English', value: 'en' },
+            ]}
+            value={currentLang}
+            onChange={(code) => void changeLang(code as 'es' | 'en')}
+          />
+        </AppCard>
+
+        {/* Velocidad de Juego & Bots / Game & Bot Speed */}
+        <AppCard
+          variant="outlined"
+          title={lang.settings.botSpeedTitle}
+          subtitle={lang.settings.botSpeedSubtitle}
+          style={styles.card}
+        >
+          <AppSegmentedControl
+            options={[
+              { label: lang.settings.botSpeedVerySlow, value: 'very_slow' },
+              { label: lang.settings.botSpeedSlow, value: 'slow' },
+              { label: lang.settings.botSpeedNormal, value: 'normal' },
+              { label: lang.settings.botSpeedFast, value: 'fast' },
+            ]}
+            value={config.botSpeed ?? 'slow'}
+            onChange={(speed) => void saveField('botSpeed', speed as BotSpeed)}
+          />
+        </AppCard>
+
+        {/* Tema / Theme */}
+        <AppCard
+          variant="outlined"
+          title={lang.settings.theme}
+          subtitle={
+            currThemeName === 'light'
+              ? lang.settings.themeSubtitleLight
+              : lang.settings.themeSubtitleDark
+          }
+          style={styles.card}
+        >
+          <View style={styles.toggleRow}>
+            <ToggleLightDark
+              toggle={toggleTheme}
+              setLeft={currThemeName === 'light'}
+              accessibilityLabel={lang.settings.theme}
+              style={styles.toggle}
+              colors={{
+                light: {
+                  background: lightTokens.surfaceAlt,
+                  border: lightTokens.border,
+                  circle: lightTokens.primary,
+                  sun: lightTokens.warning,
+                  moon: lightTokens.muted,
+                },
+                dark: {
+                  background: darkTokens.surfaceAlt,
+                  border: darkTokens.border,
+                  circle: darkTokens.primary,
+                  sun: darkTokens.warning,
+                  moon: darkTokens.muted,
+                },
+              }}
+            />
+          </View>
+        </AppCard>
+
+        {/* Respuesta Sensorial / Haptics */}
+        <AppCard
+          variant="outlined"
+          title={lang.settings.sensoryTitle}
+          subtitle={lang.settings.sensorySubtitle}
+          style={styles.card}
+        >
+          <AppSwitch
+            checked={hapticsEnabled}
+            onChange={(val) => void setHapticsEnabled(val)}
+            label={lang.settings.hapticsLabel}
+          />
+        </AppCard>
+
+        {/* Tipografía / Typography */}
+        <AppCard
+          variant="outlined"
+          title={lang.settings.typography}
+          subtitle={lang.settings.typographySubtitle}
+          style={styles.card}
+        >
+          <View style={[styles.fontPreviewBox, { backgroundColor: theme.surfaceAlt, borderColor: theme.border }]}>
+            <Text
+              style={[
+                styles.fontPreviewSample,
+                { color: theme.color, fontFamily: config.fontFamily },
+              ]}
+            >
+              {lang.settings.fontPreviewText}
+            </Text>
+            <Text
+              style={[
+                styles.fontPreviewMeta,
+                { color: theme.muted, fontFamily: config.fontFamily },
+              ]}
+            >
+              {config.fontFamily} • ABCDEFGHIJKLMNOPQRSTUVWXYZ • 1234567890
+            </Text>
+          </View>
+
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.fontsScroll}
+          >
+            {FONTS.map((font) => {
+              const active = config.fontFamily === font;
+              const displayLabel =
+                font === 'PlayfairDisplay'
+                  ? 'Playfair'
+                  : font === 'SpaceMono'
+                    ? 'Space Mono'
+                    : font;
+              return (
+                <Pressable
+                  key={font}
+                  accessibilityRole="button"
+                  accessibilityLabel={displayLabel}
+                  accessibilityState={{ selected: active }}
+                  onPress={() => void saveField('fontFamily', font)}
                   style={[
-                    styles.fontChipText,
+                    styles.fontChip,
                     {
-                      color: active ? theme.primary : theme.color,
-                      fontFamily: font,
+                      backgroundColor: active ? theme.primarySoft : theme.surfaceAlt,
+                      borderColor: active ? theme.primary : theme.border,
                     },
                   ]}
                 >
-                  {displayLabel}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
-      </AppCard>
+                  <Text
+                    style={[
+                      styles.fontChipText,
+                      {
+                        color: active ? theme.primary : theme.color,
+                        fontFamily: font,
+                      },
+                    ]}
+                  >
+                    {displayLabel}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </AppCard>
 
-      {/* Permisos del sistema / Permissions subpage */}
-      <AppCard
-        variant="outlined"
-        title={lang.settings.permissionsTitle}
-        subtitle={lang.settings.permissionsSubtitle}
-        badge={lang.settings.permissionsBadge}
-        badgeTone="neutral"
-        style={styles.card}
-      >
-        <AppButton
-          variant="outline"
-          tone="primary"
-          size="md"
-          label={lang.settings.permissionsTitle}
-          rightIcon={
-            <AlambreIcons.Arrow
-              drawIt
-              color={theme.primary}
-              lineWidth={16}
-              style={styles.arrowIcon}
-            />
-          }
-          onPress={() => navigate('settings', { subpage: 'permissions' })}
-          fullWidth
-        />
-      </AppCard>
+        {/* Permisos del sistema / Permissions subpage */}
+        <AppCard
+          variant="outlined"
+          title={lang.settings.permissionsTitle}
+          subtitle={lang.settings.permissionsSubtitle}
+          badge={lang.settings.permissionsBadge}
+          badgeTone="neutral"
+          style={styles.card}
+        >
+          <AppButton
+            variant="outline"
+            tone="primary"
+            size="md"
+            label={lang.settings.permissionsTitle}
+            rightIcon={
+              <AlambreIcons.Arrow
+                drawIt
+                color={theme.primary}
+                lineWidth={16}
+                style={styles.arrowIcon}
+              />
+            }
+            onPress={() => navigate('settings', { subpage: 'permissions' })}
+            fullWidth
+          />
+        </AppCard>
 
-      {/* Apoyar el proyecto / Support */}
-      <AppCard
-        variant="outlined"
-        title={lang.settings.supportTitle}
-        subtitle={lang.settings.supportHint}
-        style={styles.card}
-      >
-        <AppButton
-          variant="soft"
-          tone="primary"
-          size="md"
-          label={lang.settings.supportAction}
-          rightIcon={
-            <AlambreIcons.Coffee
-              color={theme.primary}
-              lineWidth={2.2}
-              style={styles.coffeeIcon}
-            />
-          }
-          onPress={handleOpenCafecito}
-          fullWidth
-        />
-      </AppCard>
+        {/* Apoyar el proyecto / Support */}
+        <AppCard
+          variant="outlined"
+          title={lang.settings.supportTitle}
+          subtitle={lang.settings.supportHint}
+          style={styles.card}
+        >
+          <AppButton
+            variant="soft"
+            tone="primary"
+            size="md"
+            label={lang.settings.supportAction}
+            rightIcon={
+              <AlambreIcons.Coffee
+                color={theme.primary}
+                lineWidth={1.75}
+                style={styles.coffeeIcon}
+              />
+            }
+            onPress={handleOpenCafecito}
+            fullWidth
+          />
+        </AppCard>
 
-      {/* Acerca de / About & Diagnostics */}
-      <AppCard
-        variant="outlined"
-        title={lang.settings.aboutTitle}
-        style={styles.card}
-      >
-        <View style={styles.aboutContent}>
-          <View style={styles.aboutRow}>
-            <Text style={[styles.aboutLabel, { color: theme.muted }]}>
-              {lang.settings.version}
-            </Text>
-            <Text style={[styles.aboutValue, { color: theme.color }]}>
-                1.0.0
-            </Text>
-          </View>
-          <View style={[styles.aboutDivider, { backgroundColor: theme.border }]} />
-          <View style={styles.aboutRow}>
-            <Text style={[styles.aboutLabel, { color: theme.muted }]}>
-              {lang.settings.framework}
-            </Text>
-            <Text style={[styles.aboutValue, { color: theme.color }]}>
-                alambre v1.2.0
-            </Text>
-          </View>
-          <View style={[styles.aboutDivider, { backgroundColor: theme.border }]} />
-          <View style={styles.aboutRow}>
-            <Text style={[styles.aboutLabel, { color: theme.muted }]}>
-              {lang.settings.developer}
-            </Text>
-            <Text style={[styles.aboutValue, { color: theme.primary }]}>
+        {/* Acerca de / About & Diagnostics */}
+        <AppCard
+          variant="outlined"
+          title={lang.settings.aboutTitle}
+          style={styles.card}
+        >
+          <View style={styles.aboutContent}>
+            <View style={styles.aboutRow}>
+              <Text style={[styles.aboutLabel, { color: theme.muted, fontFamily: config.fontFamily }]}>
+                {lang.settings.version}
+              </Text>
+              <Text style={[styles.aboutValue, { color: theme.color, fontFamily: config.fontFamily }]}>
+                0.1.0
+              </Text>
+            </View>
+            <View style={[styles.aboutDivider, { backgroundColor: theme.border }]} />
+            <View style={styles.aboutRow}>
+              <Text style={[styles.aboutLabel, { color: theme.muted, fontFamily: config.fontFamily }]}>
+                {lang.settings.framework}
+              </Text>
+              <Text style={[styles.aboutValue, { color: theme.color, fontFamily: config.fontFamily }]}>
+                alambre v1.2.0 • room-relay v1.0.0
+              </Text>
+            </View>
+            <View style={[styles.aboutDivider, { backgroundColor: theme.border }]} />
+            <View style={styles.aboutRow}>
+              <Text style={[styles.aboutLabel, { color: theme.muted, fontFamily: config.fontFamily }]}>
+                {lang.settings.developer}
+              </Text>
+              <Text style={[styles.aboutValue, { color: theme.primary, fontFamily: config.fontFamily }]}>
                 @marcosdima
-            </Text>
-          </View>
+              </Text>
+            </View>
 
-          <View style={styles.aboutActions}>
-            <AppButton
-              variant="outline"
-              tone="primary"
-              size="md"
-              label={lang.settings.copyDiagnostics}
-              onPress={handleCopyDiagnostics}
-              rightIcon={
-                <AlambreIcons.Documents
-                  color={theme.primary}
-                  lineWidth={2.2}
-                  style={styles.actionIcon}
-                />
-              }
-              fullWidth
-            />
-            <AppButton
-              variant="ghost"
-              tone="neutral"
-              size="md"
-              label={lang.settings.viewGithub}
-              onPress={handleOpenGithub}
-              rightIcon={
-                <AlambreIcons.Arrow
-                  drawIt
-                  color={theme.color}
-                  lineWidth={16}
-                  style={styles.arrowIcon}
-                />
-              }
-              fullWidth
-            />
+            <View style={styles.aboutActions}>
+              <AppButton
+                variant="outline"
+                tone="primary"
+                size="md"
+                label={lang.settings.copyDiagnostics}
+                onPress={handleCopyDiagnostics}
+                rightIcon={
+                  <AlambreIcons.Documents
+                    color={theme.primary}
+                    lineWidth={1.75}
+                    style={styles.actionIcon}
+                  />
+                }
+                fullWidth
+              />
+              <AppButton
+                variant="ghost"
+                tone="neutral"
+                size="md"
+                label={lang.settings.viewGithub}
+                onPress={handleOpenGithub}
+                rightIcon={
+                  <AlambreIcons.Arrow
+                    drawIt
+                    color={theme.color}
+                    lineWidth={16}
+                    style={styles.arrowIcon}
+                  />
+                }
+                fullWidth
+              />
+            </View>
           </View>
-        </View>
-      </AppCard>
+        </AppCard>
 
-      {/* Restablecer ajustes / Reset */}
-      <AppCard
-        variant="outlined"
-        title={lang.settings.resetTitle}
-        subtitle={lang.settings.resetSubtitle}
-        style={styles.card}
-      >
-        <AppButton
-          variant="outline"
-          tone="danger"
-          size="md"
-          label={lang.settings.resetAction}
-          rightIcon={
-            <AlambreIcons.Refresh
-              color="#ef4444"
-              lineWidth={2.2}
-              style={styles.actionIcon}
-            />
-          }
-          onPress={() => void handleReset()}
-          fullWidth
-        />
-      </AppCard>
-    </ScrollView>
+        {/* Restablecer ajustes / Reset */}
+        <AppCard
+          variant="outlined"
+          title={lang.settings.resetTitle}
+          subtitle={lang.settings.resetSubtitle}
+          style={styles.card}
+        >
+          <AppButton
+            variant="outline"
+            tone="danger"
+            size="md"
+            label={lang.settings.resetAction}
+            rightIcon={
+              <AlambreIcons.Refresh
+                color={theme.danger}
+                lineWidth={1.75}
+                style={styles.actionIcon}
+              />
+            }
+            onPress={() => void handleReset()}
+            fullWidth
+          />
+        </AppCard>
+      </View>
+    </View>
   );
 };
 
@@ -367,34 +420,6 @@ const styles = StyleSheet.create({
   },
   card: {
     borderWidth: 1.5,
-  },
-  segmentedContainer: {
-    flexDirection: 'row',
-    borderRadius: 12,
-    borderWidth: 1.5,
-    padding: 4,
-    gap: 6,
-    marginTop: 4,
-  },
-  segmentedButton: {
-    flex: 1,
-    paddingVertical: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 8,
-    borderWidth: 1.5,
-    borderColor: 'transparent',
-  },
-  segmentedButtonActive: {
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
-  },
-  segmentedText: {
-    fontSize: 14,
-    letterSpacing: 0.2,
   },
   toggleRow: {
     alignItems: 'center',
@@ -445,7 +470,23 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingVertical: 4,
   },
+  fontPreviewBox: {
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    gap: 6,
+    marginBottom: 6,
+  },
+  fontPreviewSample: {
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  fontPreviewMeta: {
+    fontSize: 11,
+    letterSpacing: 0.3,
+  },
   fontChip: {
+    minHeight: 44,
     paddingVertical: 10,
     paddingHorizontal: 16,
     alignItems: 'center',
@@ -457,4 +498,3 @@ const styles = StyleSheet.create({
     fontSize: 15,
   },
 });
-

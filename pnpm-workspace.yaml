@@ -1,3 +1,4 @@
 minimumReleaseAgeExclude:
-  - '@some-alambre/ui@1.0.0'
+  - '@some-alambre/ui@1.0.0 || 1.1.0'
   - alambre@1.2.0
+  - '@some-alambre/room-relay@1.0.0'

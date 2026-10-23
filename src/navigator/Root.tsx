@@ -8,56 +8,69 @@ import { useNavigator } from 'alambre';
 import type { Page } from 'alambre';
 import { useLightDark } from '../providers/theme';
 import { useLang } from '../providers/lang';
+import { useConfig } from '../providers/config';
 import { pages, type PageTitleFn } from './navigator';
-import { ThemeProvider } from '@some-alambre/ui';
 import AppNavigatorBody from './AppNavigatorBody';
 
-const resolvePageTitle = (
+const resolvePageMeta = (
   page: Page,
-): PageTitleFn | undefined => {
+): { title?: PageTitleFn; scrollable: boolean; hideBackArrow?: boolean } => {
   for (const entry of Object.values(pages)) {
-    if (entry === page) return entry.title;
+    if (entry === page) {
+      return {
+        title: entry.title,
+        scrollable: entry.scrollable ?? true,
+        hideBackArrow: entry.hideBackArrow,
+      };
+    }
     if (entry.subpages) {
       for (const sub of Object.values(entry.subpages)) {
-        if (sub === page) return sub.title;
+        if (sub === page) {
+          return {
+            title: sub.title,
+            scrollable: sub.scrollable ?? true,
+            hideBackArrow: sub.hideBackArrow,
+          };
+        }
       }
     }
   }
-  return undefined;
+  return { scrollable: true };
 };
 
 export default () => {
   const { theme } = useLightDark();
   const { lang } = useLang();
+  const { config } = useConfig();
   const { currentPage } = useNavigator();
 
-  const titleFn = resolvePageTitle(currentPage);
+  const { title: titleFn, scrollable, hideBackArrow } = resolvePageMeta(currentPage);
   const headerTitle = titleFn ? titleFn(lang) : undefined;
 
-
   return (
-    <ThemeProvider theme={theme}>
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-        <AppNavigatorBody
-          style={styles.container}
-          arrowColor={theme.primary}
-          arrowBackgroundColor={theme.surfaceAlt}
-          arrowBorderColor={theme.border}
-          headerStyle={{ backgroundColor: theme.surfaceAlt }}
-          titleColor={theme.color}
-          headerTitle={headerTitle}
-          animations={{
-            go: {
-              pageEntering: FadeIn.duration(200).easing(Easing.out(Easing.cubic)),
-            },
-            return: {
-              pageEntering: FadeIn.duration(200).easing(Easing.out(Easing.cubic)),
-            },
-          }}
-          useNavigator={useNavigator}
-        />
-      </SafeAreaView>
-    </ThemeProvider>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+      <AppNavigatorBody
+        style={styles.container}
+        arrowColor={theme.primary}
+        arrowBackgroundColor={theme.surfaceAlt}
+        arrowBorderColor={theme.border}
+        headerStyle={{ backgroundColor: theme.surfaceAlt }}
+        titleColor={theme.color}
+        headerTitle={headerTitle}
+        fontFamily={config.fontFamily}
+        scrollable={scrollable}
+        hideBackArrow={hideBackArrow}
+        animations={{
+          go: {
+            pageEntering: FadeIn.duration(200).easing(Easing.out(Easing.cubic)),
+          },
+          return: {
+            pageEntering: FadeIn.duration(200).easing(Easing.out(Easing.cubic)),
+          },
+        }}
+        useNavigator={useNavigator}
+      />
+    </SafeAreaView>
   );
 };
 

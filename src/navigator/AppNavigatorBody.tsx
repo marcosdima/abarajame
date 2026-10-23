@@ -29,7 +29,10 @@ type AppNavigatorBodyProps = ComponentProps<typeof View> & {
   pressStyle?: StyleProp<ViewStyle>;
   headerTitle?: string;
   titleColor?: ColorValue;
+  fontFamily?: string;
   headerStyle?: StyleProp<ViewStyle>;
+  scrollable?: boolean;
+  hideBackArrow?: boolean;
   animations?: {
     go?: AppNavigatorAnimations;
     return?: AppNavigatorAnimations;
@@ -46,7 +49,10 @@ export default ({
   width = 4,
   headerTitle,
   titleColor = 'black',
+  fontFamily,
   headerStyle,
+  scrollable = true,
+  hideBackArrow = false,
   useNavigator,
   ...props
 }: AppNavigatorBodyProps) => {
@@ -65,7 +71,7 @@ export default ({
   const [drawArrow, setDrawArrow] = useState(false);
 
   const headerMode = headerTitle !== undefined && !noPreviousPages;
-  const canShowArrow = headerMode || (!noPreviousPages && scrollTop <= 4);
+  const canShowArrow = !hideBackArrow && (headerMode || (!noPreviousPages && scrollTop <= 4));
 
   useEffect(() => {
     if (canShowArrow) {
@@ -118,6 +124,8 @@ export default ({
 
   const arrowButton = (
     <Pressable
+      accessibilityRole="button"
+      accessibilityLabel="Back"
       onPressIn={onPressIn}
       onPressOut={onPressOut}
       disabled={!canShowArrow}
@@ -174,6 +182,9 @@ export default ({
 
   useEffect(() => {
     const onHardwareBack = () => {
+      if (hideBackArrow) {
+        return false;
+      }
       if (!noPreviousPages) {
         isReturningRef.current = true;
         previous();
@@ -186,7 +197,7 @@ export default ({
     return () => {
       sub?.remove?.();
     };
-  }, [noPreviousPages, previous]);
+  }, [hideBackArrow, noPreviousPages, previous]);
 
   return (
     <View
@@ -208,7 +219,11 @@ export default ({
           </Animated.View>
           <Animated.Text
             key={headerTitle}
-            style={[styles.headerTitle, { color: titleColor }]}
+            style={[
+              styles.headerTitle,
+              { color: titleColor, fontFamily },
+              fontFamily ? { fontWeight: 'normal' } : null,
+            ]}
             entering={FadeIn.duration(180)}
             numberOfLines={1}
           >
@@ -217,21 +232,33 @@ export default ({
         </Animated.View>
       )}
 
-      <ScrollView
-        style={styles.pageScroll}
-        contentContainerStyle={styles.pageScrollContent}
-        onScroll={(event) => setScrollTop(Math.max(0, event.nativeEvent.contentOffset.y))}
-        scrollEventThrottle={16}
-        keyboardShouldPersistTaps="handled"
-      >
-        <Animated.View
-          key={pageKey}
-          style={styles.pageContainer}
-          entering={enterAnimation}
+      {scrollable ? (
+        <ScrollView
+          style={styles.pageScroll}
+          contentContainerStyle={styles.pageScrollContent}
+          onScroll={(event) => setScrollTop(Math.max(0, event.nativeEvent.contentOffset.y))}
+          scrollEventThrottle={16}
+          keyboardShouldPersistTaps="handled"
         >
-          {currentPage.component}
-        </Animated.View>
-      </ScrollView>
+          <Animated.View
+            key={pageKey}
+            style={styles.pageContainer}
+            entering={enterAnimation}
+          >
+            {currentPage.component}
+          </Animated.View>
+        </ScrollView>
+      ) : (
+        <View style={styles.pageScroll}>
+          <Animated.View
+            key={pageKey}
+            style={styles.pageContainer}
+            entering={enterAnimation}
+          >
+            {currentPage.component}
+          </Animated.View>
+        </View>
+      )}
 
       {!headerMode && (
         <Animated.View

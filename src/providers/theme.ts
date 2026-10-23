@@ -22,6 +22,20 @@ export const light = {
   dangerSoft: '#e2c5c0', // light rust
   overlay: 'rgba(45, 47, 45, 0.45)',
   overlayBar: 'rgba(45, 47, 45, 0.05)',
+  // Tabletop & Spanish Deck semantic tokens
+  feltSurface: '#374733',
+  feltBorder: '#283625',
+  onFelt: '#f3eedf',
+  onFeltMuted: '#c3ceb3',
+  cardFace: '#fcfaf2',
+  cardBorder: '#c9c1ae',
+  cardBack: '#2b3829',
+  cardBackAccent: '#d2bca8',
+  suitOros: '#b45309',
+  suitCopas: '#b91c1c',
+  suitEspadas: '#1d4ed8',
+  suitBastos: '#15803d',
+  suitJoker: '#7c3aed',
 };
 
 export const dark = {
@@ -45,7 +59,23 @@ export const dark = {
   dangerSoft: '#472d28',
   overlay: 'rgba(0, 0, 0, 0.65)',
   overlayBar: 'rgba(236, 230, 214, 0.15)',
+  // Tabletop & Spanish Deck semantic tokens
+  feltSurface: '#1f281d',
+  feltBorder: '#333b30',
+  onFelt: '#ece6d6',
+  onFeltMuted: '#a3a8a3',
+  cardFace: '#f7f3e6',
+  cardBorder: '#9ca3af',
+  cardBack: '#1e293b',
+  cardBackAccent: '#c3ceb3',
+  suitOros: '#d97706',
+  suitCopas: '#dc2626',
+  suitEspadas: '#2563eb',
+  suitBastos: '#16a34a',
+  suitJoker: '#8b5cf6',
 };
 
-export const { useLightDark, actions: { toggleTheme, setThemeName } } = createLightDark(light, dark, storage);
-
+export const {
+  useLightDark,
+  actions: { toggleTheme, setThemeName },
+} = createLightDark(light, dark, storage);

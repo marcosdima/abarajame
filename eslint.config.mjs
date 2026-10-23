@@ -7,7 +7,7 @@ import reactNative from 'eslint-plugin-react-native';
 
 export default [
   {
-    ignores: ['**/dist/**', '**/node_modules/**', '**/android/**', '**/.expo/**', '**/metro.config.js'],
+    ignores: ['**/dist/**', '**/node_modules/**', '**/android/**', '**/.expo/**', '**/metro.config.js', 'scripts/**'],
   },
 
   js.configs.recommended,
@@ -28,6 +28,8 @@ export default [
         clearTimeout: 'readonly',
         setInterval: 'readonly',
         clearInterval: 'readonly',
+        queueMicrotask: 'readonly',
+        requestAnimationFrame: 'readonly',
       },
     },
     plugins: {
